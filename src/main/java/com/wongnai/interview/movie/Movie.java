@@ -24,7 +24,11 @@ public class Movie {
 	/**
 	 * Required by JPA.
 	 */
-	protected Movie() {
+	public Movie() {
+	}
+
+	public void setActors(List<String> actors) {
+		this.actors = actors;
 	}
 
 	public Movie(String name) {
