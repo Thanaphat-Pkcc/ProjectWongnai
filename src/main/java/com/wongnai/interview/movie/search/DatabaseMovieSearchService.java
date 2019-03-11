@@ -33,5 +33,6 @@ public class DatabaseMovieSearchService implements MovieSearchService {
 		//System.out.println("Query from user ::== "+queryText.toLowerCase());
 		
 		return movieRepository.findByNameContaining(queryText.toUpperCase());
+		//return movieRepository.findAll(queryText.toUpperCase());
 	}
 }

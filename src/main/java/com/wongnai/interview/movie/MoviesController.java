@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.wongnai.interview.movie.external.MovieDataServiceImpl;
 import com.wongnai.interview.movie.external.MoviesResponse;
 import com.wongnai.interview.movie.search.DatabaseMovieSearchService;
+import com.wongnai.interview.movie.search.InvertedIndexMovieSearchService;
 
 @RestController
 @RequestMapping("/movies")
@@ -40,6 +41,10 @@ public class MoviesController {
 	//@Autowired
 	//@Qualifier("databaseMovieSearchService")
 	//private DatabaseMovieSearchService databaseMovieSearchService;
+	
+	@Autowired
+	@Qualifier("invertedIndexMovieSearchService")
+	private InvertedIndexMovieSearchService invertedIndexMovieSearchService;
 
 	@RequestMapping(method = RequestMethod.GET)
 	public String helloWorld() {
@@ -55,5 +60,12 @@ public class MoviesController {
 		
 		return movieSearchService.search(keyword);
 		//return databaseMovieSearchService.search(keyword);
+	}
+	
+	@RequestMapping(value = "/test", method = RequestMethod.GET)
+	public List<Movie> searchTitleWithKeyword2(@RequestParam("q") String keyword) {
+		
+		//return movieSearchService.search(keyword);
+		return invertedIndexMovieSearchService.search(keyword);
 	}
 }
