@@ -1,10 +1,6 @@
 package com.wongnai.interview.movie.search;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -15,17 +11,19 @@ import org.springframework.stereotype.Component;
 import com.wongnai.interview.movie.Movie;
 import com.wongnai.interview.movie.MovieRepository;
 import com.wongnai.interview.movie.MovieSearchService;
+import com.wongnai.interview.movie.sync.MovieDataSynchronizer;
 
 @Component("invertedIndexMovieSearchService")
 @DependsOn("movieDatabaseInitializer")
 public class InvertedIndexMovieSearchService implements MovieSearchService {
 	@Autowired
 	private MovieRepository movieRepository;
-
+	@Autowired
+	private MovieDataSynchronizer movieDataSynchronizer;
+	
 	@Override
 	public List<Movie> search(String queryText) {
 
-		List<Movie> ListMovies = new ArrayList<Movie>();
 		// TODO: Step 4 => Please implement in-memory inverted index to search movie by
 		// keyword.
 		// You must find a way to build inverted index before you do an actual search.
@@ -49,141 +47,44 @@ public class InvertedIndexMovieSearchService implements MovieSearchService {
 		// By the way, in this assignment, you must use intersection so that it left for
 		// just movie id 5.
 		// create inverted index of all files
+		
+		List<Movie> ListMovies = new ArrayList<Movie>();
+		Map<String, List<Long>> InvertedIndex = movieDataSynchronizer.getInvertedIndex();
 
-		Map<String, List<Long>> m = new HashMap<>();
-		// List<Long> id = new ArrayList<Long>();
-		ListMovies = movieRepository.findAll("a");
-		// List<TermInvertedIndexMovie> Listindex = new
-		// ArrayList<TermInvertedIndexMovie>();
-		for (int i = 0; i < ListMovies.size(); i++) {
-
-			// TermInvertedIndexMovie termInvertedIndexMovie = new TermInvertedIndexMovie();
-			// List<Long> id = new ArrayList<Long>();
-			// System.out.println("Docuemnt number is:: == "+(i+1));
-			Movie movie = new Movie();
-			String QueryText = queryText.toUpperCase();
-
-			String aftersplit = ListMovies.get(i).getName().toUpperCase();
-			String[] parts = aftersplit.split(" ");
-			// split word and mapping word to terms:id
-			for (int j = 0; j < parts.length; j++) {
-
-				// TermInvertedIndexMovie termInvertedIndexMovie = new TermInvertedIndexMovie();
-				List<Long> id = new ArrayList<Long>();
-
-				// System.out.println(parts[j]+" ");
-
-				if (m.containsKey(parts[j])) {
-					// System.out.println("::::::::::::::::::::IN IF CHECK
-					// CONTAINSKEY::::::::::::::::::::"+"\n");
-					// System.out.println(parts[j]+" +STRING+ "+m.keySet().toArray()[0]+" :##:
-					// "+m.get(parts[j]));
-					// System.out.println("::::::::::::::::::::IN IF CHECK
-					// CONTAINSKEY::::::::::::::::::::");
-					id.addAll(m.get(parts[j]));
-
-				}
-
-				// MAPPING TERMS OF WORD TO ID(TITLE)
-				id.add(ListMovies.get(i).getId());
-				m.put(parts[j], id);
-
-				// m.put(parts[j], value)
-				// id.add(ListMovies.get(i).getId());
-				// m.put(parts[j], id);
-
-				// if(m.containsKey(parts[j])) {
-				// id.add(i, ListMovies.get(i).getId());
-				// m.put(parts[j], id);
-				// }
-				// else {
-				// id.add(i, ListMovies.get(i).getId());
-				// id.add(ListMovies.get(i),ListMovies.get(i).getId());
-				// m.put(parts[j], id);
-
-				// }
-
-				// if (!m.isEmpty())
-				// {
-				// System.out.println(Arrays.asList(m));
-				// }
-
-			}
-			// System.out.println();
-			// System.out.println("=====================IN OBJECT==========================
-			// ");
-
-		}
-		// for(int i=0;i<Listindex.size();i++) {
-		// System.out.println(Listindex.get(i).getTerm()+":
-		// "+Listindex.get(i).getMovieIds());
-
-		// }
-		// queryText = "Boarding";
-		System.out.println(queryText.toUpperCase());
-		System.out.println(m.size());
-		System.out.println(m.get(queryText.toUpperCase()));
-
+		//Split query to search with term
 		String QueryText = queryText.toUpperCase();
-		// List<Long> id = new ArrayList<Long>();
 		String aftersplit = QueryText;
 		String[] parts = aftersplit.split(" ");
-		// movieRepository.findNameByIndex(m.get("a"), queryText);
-
-		// m.get("a");
-		List<Long> id = new ArrayList<Long>();
-		id = Collections.<Long>emptyList();
-		System.out.println("Set id is empty :: == " + id);
-		System.out.println("Length after split :: == " + parts.length);
-		System.out.println("String after split :: == " + parts[0]);
-		id = m.get(parts[0]);
-
-		if (parts.length == 2) {
-			System.out.println("IN FOR LOPP PARTS");
-			try {
-				System.out.println("Swap word :: == " + parts[1] + " " + parts[0].toUpperCase());
-				ListMovies = movieRepository.findNameByIndex(id, queryText.toUpperCase());
-				// ListMovies = movieRepository.findNameByIndex(id,parts[1]+"
-				// "+parts[0].toUpperCase());
-				if (ListMovies != null) {
-					ListMovies = movieRepository.findNameByIndex(id, parts[1] + " " + parts[0].toUpperCase());
+		List<Long> MovieIds = new ArrayList<Long>();
+		if(parts.length>1) {
+			for(int i =0;i<parts.length-1;i++) {
+				List<Long> id1 = new ArrayList<Long>();
+				List<Long> id2 = new ArrayList<Long>();
+				
+				//Check intersect MovieIds
+				if(i==0) {
+					id1.addAll(InvertedIndex.get(parts[i]));
+					id2.addAll(InvertedIndex.get(parts[i+1]));
+					id1.retainAll(id2);
+					MovieIds=id1;
 				}
-
-				System.out.println("IN TRY ::==" + ListMovies);
-				return ListMovies;
-			} catch (Exception e) {
-				System.out.println("IN CATCH EXCEPTION");
-				try {
-					System.out.println("Swap word :: == " + parts[1] + " " + parts[0].toUpperCase());
-					ListMovies = movieRepository.findNameByIndex(id, parts[1] + " " + parts[0].toUpperCase());
-					return ListMovies;
-				} catch (Exception e2) {
-					return null;
-				}
-
+				id2.addAll(InvertedIndex.get(parts[i+1]));
+				MovieIds.retainAll(id2);
+				
+				
 			}
 		}
-
-		System.out.println("ID IN QUERY :: == " + id);
+		else {
+			MovieIds = InvertedIndex.get(parts[0]);
+		}
+		//Query in database By MovieIds
 		try {
-			ListMovies = movieRepository.findNameByIndex(id, queryText.toUpperCase());
-			System.out.println("IN TRY");
+			ListMovies = movieRepository.findNameByIndex(MovieIds);
 		} catch (Exception e) {
-			System.out.println("IN CATCH EXCEPTION");
 			return null;
 		}
-		// ListMovies = movieRepository.findNameByIndex(id,queryText.toUpperCase());
-
-		// System.out.println("=======================IN MAPPING========================
-		// ");
-		// System.out.println("Size MAP IS :: == "+m.size());
-		// System.out.println("++++++++++++++++++++++++++++++++++");
-		// if (!m.isEmpty())
-		// {
-		// System.out.println(Arrays.asList(m));
-		// }
-
-		// ListMovies = movieRepository.findNameByIndex(m.get(queryText.toUpperCase()));
+		 
+		 
 		return ListMovies;
 	}
 }

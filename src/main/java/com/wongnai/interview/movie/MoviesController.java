@@ -9,16 +9,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.wongnai.interview.movie.external.MovieDataServiceImpl;
-import com.wongnai.interview.movie.external.MoviesResponse;
-import com.wongnai.interview.movie.search.DatabaseMovieSearchService;
-import com.wongnai.interview.movie.search.InvertedIndexMovieSearchService;
-
 @RestController
 @RequestMapping("/movies")
 public class MoviesController {
-	private MovieDataServiceImpl movieDataServiceImpl;
-	private MoviesResponse moviesResponse;
 	
 	
 	
@@ -34,23 +27,13 @@ public class MoviesController {
 	 * </pre>
 	 */
 	@Autowired
-	@Qualifier("databaseMovieSearchService")
-	//@Qualifier("simpleMovieSearchService")
+	@Qualifier("invertedIndexMovieSearchService")
 	private MovieSearchService movieSearchService;
 	
-	//@Autowired
-	//@Qualifier("databaseMovieSearchService")
-	//private DatabaseMovieSearchService databaseMovieSearchService;
-	
-	@Autowired
-	@Qualifier("invertedIndexMovieSearchService")
-	private InvertedIndexMovieSearchService invertedIndexMovieSearchService;
 
 	@RequestMapping(method = RequestMethod.GET)
 	public String helloWorld() {
 
-		//moviesResponse = movieDataServiceImpl.fetchAll();
-		//System.out.println("IN REQUESTMAPPING ::== "+moviesResponse);
 		
 		return "Hello World!";
 	}
@@ -59,13 +42,7 @@ public class MoviesController {
 	public List<Movie> searchTitleWithKeyword(@RequestParam("q") String keyword) {
 		
 		return movieSearchService.search(keyword);
-		//return databaseMovieSearchService.search(keyword);
 	}
 	
-	@RequestMapping(value = "/test", method = RequestMethod.GET)
-	public List<Movie> searchTitleWithKeyword2(@RequestParam("q") String keyword) {
-		
-		//return movieSearchService.search(keyword);
-		return invertedIndexMovieSearchService.search(keyword);
-	}
+	
 }
